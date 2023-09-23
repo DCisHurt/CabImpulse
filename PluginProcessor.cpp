@@ -224,39 +224,90 @@ void CabImpulseAudioProcessor::updateCutFilter(const ChainSettings &chainSetting
 
 void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainSettings)
 {
-    String mic("IR_");
-    mic += (String)(int)getSampleRate();
-    mic += "_";
-    mic += CabType[chainSettings.cabType];
-    mic += "_";
-    mic += MicType[chainSettings.micType];
-    mic += "_";
 
-    if (chainSettings.micOffAxis)
-        mic += "OFF_";
+    String irName("IR_");
+    irName += (String)(int)getSampleRate();
+    irName += "_";
+    irName += CabType[chainSettings.cabType];
+    irName += "_";
+    irName += MicType[chainSettings.micType];
+    irName += "_Close_wav";
 
-    switch (chainSettings.micDistance)
-    {
-    case 0:
-        mic += "Close";
-        break;
-    case 1:
-        mic += "Mid";
-        break;
-    case 2:
-        mic += "Far";
-        break;
+    // switch ((int)getSampleRate())
+    // {
+    // case 44100:
+    //     /* code */
+    //     break;
+    // case 48000:
+    //     /* code */
+    //     break;
+    // case 88200:
+    //     /* code */
+    //     break;
+    // case 96000:
+    //     /* code */
+    //     break;
+    // default:
+    //     break;
+    // }
 
-    default:
-        break;
-    }
 
-    mic += "_wav";
-    const char *irName = mic.toRawUTF8();
+
+    auto buffer = readIRbuffer(BinaryData::getNamedIndex(irName.toRawUTF8()));
+    leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
+                                                                  getSampleRate(),
+                                                                  juce::dsp::Convolution::Stereo::no,
+                                                                  juce::dsp::Convolution::Trim::yes,
+                                                                  juce::dsp::Convolution::Normalise::yes);
+
+    rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
+                                                                   getSampleRate(),
+                                                                   juce::dsp::Convolution::Stereo::no,
+                                                                   juce::dsp::Convolution::Trim::yes,
+                                                                   juce::dsp::Convolution::Normalise::yes);
+
+    // const char *binaryData = 0;
+    // int binaryDataSize = 0;
+
+    // binaryData = BinaryData::getNamedResource(irName, binaryDataSize);
+
+    // int index = BinaryData::getNamedIndex(irName);
+    // DBG(index);
+    // auto *inputStream = new MemoryInputStream(binaryData, binaryDataSize, false);
+    // WavAudioFormat format;
+    // auto reader = format.createReaderFor(inputStream, true);
+
+    // // If reader was successfully created, load into AudioSampleBuffer array
+    // if (reader)
+    // {
+    //     AudioBuffer<float> buffer(static_cast<int>(reader->numChannels),
+    //                               static_cast<int>(reader->lengthInSamples));
+    //     reader->read(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), 0, buffer.getNumSamples());
+
+    //     leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
+    //                                                                   getSampleRate(),
+    //                                                                   juce::dsp::Convolution::Stereo::no,
+    //                                                                   juce::dsp::Convolution::Trim::yes,
+    //                                                                   juce::dsp::Convolution::Normalise::yes);
+
+    //     rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
+    //                                                                    getSampleRate(),
+    //                                                                    juce::dsp::Convolution::Stereo::no,
+    //                                                                    juce::dsp::Convolution::Trim::yes,
+    //                                                                    juce::dsp::Convolution::Normalise::yes);
+    // }
+    // else
+    // {
+    //     jassertfalse;
+    //     return;
+    // }
+}
+AudioBuffer<float> CabImpulseAudioProcessor::readIRbuffer(int index)
+{
     const char *binaryData = 0;
     int binaryDataSize = 0;
 
-    binaryData = BinaryData::getNamedResource(irName, binaryDataSize);
+    binaryData = BinaryData::getNamedResource(BinaryData::namedResourceList[index], binaryDataSize);
 
     auto *inputStream = new MemoryInputStream(binaryData, binaryDataSize, false);
     WavAudioFormat format;
@@ -268,23 +319,12 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
         AudioBuffer<float> buffer(static_cast<int>(reader->numChannels),
                                   static_cast<int>(reader->lengthInSamples));
         reader->read(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), 0, buffer.getNumSamples());
-
-        leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-                                                                      getSampleRate(),
-                                                                      juce::dsp::Convolution::Stereo::no,
-                                                                      juce::dsp::Convolution::Trim::yes,
-                                                                      juce::dsp::Convolution::Normalise::yes);
-
-        rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-                                                                       getSampleRate(),
-                                                                       juce::dsp::Convolution::Stereo::no,
-                                                                       juce::dsp::Convolution::Trim::yes,
-                                                                       juce::dsp::Convolution::Normalise::yes);
+        return buffer;
     }
     else
     {
         jassertfalse;
-        return;
+        return AudioBuffer<float>(1, 1);
     }
 }
 
