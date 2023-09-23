@@ -98,6 +98,7 @@ void CabImpulseAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
 
     updateCutFilter(chainSettings);
     updateImpulseResponse(chainSettings);
+    updateGain(chainSettings);
 }
 
 void CabImpulseAudioProcessor::releaseResources()
@@ -151,6 +152,7 @@ void CabImpulseAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     updateCutFilter(chainSettings);
     updateImpulseResponse(chainSettings);
+    updateGain(chainSettings);
 
     juce::dsp::AudioBlock<float> block(buffer);
 
@@ -230,7 +232,7 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
     mic += MicType[chainSettings.micType];
     mic += "_";
 
-    if(chainSettings.micOffAxis)
+    if (chainSettings.micOffAxis)
         mic += "OFF_";
 
     switch (chainSettings.micDistance)
@@ -250,7 +252,6 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
     }
 
     mic += "_wav";
-    DBG(mic);
     const char *irName = mic.toRawUTF8();
     const char *binaryData = 0;
     int binaryDataSize = 0;
@@ -287,10 +288,19 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
     }
 }
 
+void CabImpulseAudioProcessor::updateGain(const ChainSettings &chainSettings)
+{
+    auto &leftGain = leftChain.get<ChainPositions::GainControl>();
+    auto &rightGain = rightChain.get<ChainPositions::GainControl>();
+    leftGain.setGainDecibels(chainSettings.gain);
+    rightGain.setGainDecibels(chainSettings.gain);
+}
+
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)
 {
     ChainSettings settings;
 
+    settings.gain = apvts.getRawParameterValue("Gain")->load();
     settings.lowCutFreq = apvts.getRawParameterValue("Low Cut")->load();
     settings.highCutFreq = apvts.getRawParameterValue("High Cut")->load();
     settings.cabType = (int)apvts.getRawParameterValue("Cab Type")->load();
@@ -306,8 +316,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     layout.add(std::make_unique<juce::AudioParameterFloat>("Gain",
                                                            "Gain",
-                                                           juce::NormalisableRange<float>(-60.0f, 6.0f, 0.1f, 1.0f),
-                                                           1.0f));
+                                                           juce::NormalisableRange<float>(-48.0f, 24.0f, 0.1f, 1.0f),
+                                                           0.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Low Cut",
                                                            "Low Cut",

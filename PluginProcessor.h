@@ -7,7 +7,7 @@
 
 struct ChainSettings
 {
-    float lowCutFreq{0}, highCutFreq{0};
+    float gain{0}, lowCutFreq{0}, highCutFreq{0};
     int cabType{0}, micType{0}, micDistance{0};
     bool micOffAxis{0};
 };
@@ -61,7 +61,8 @@ private:
     using Filter = juce::dsp::IIR::Filter<float>;
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter>;
     using ImpulseLoader = juce::dsp::Convolution;
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, ImpulseLoader, CutFilter>;
+    using Gain = juce::dsp::Gain<float>;
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, ImpulseLoader, CutFilter, Gain>;
 
     MonoChain leftChain, rightChain;
 
@@ -69,7 +70,8 @@ private:
     {
         LowCut,
         IRloader,
-        HighCut
+        HighCut,
+        GainControl
     };
 
     juce::StringArray MicType = {"57", "121", "409", "421", "545", "i5", "Ref", "U87"};
@@ -100,7 +102,7 @@ private:
 
     void updateCutFilter(const ChainSettings &chainSettings);
     void updateImpulseResponse(const ChainSettings &chainSettings);
-
+    void updateGain(const ChainSettings &chainSettings);
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CabImpulseAudioProcessor)
 };
