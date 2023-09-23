@@ -104,7 +104,7 @@ private:
     void updateImpulseResponse(const ChainSettings &chainSettings);
     void updateGain(const ChainSettings &chainSettings);
 
-    AudioBuffer<float> readIRbuffer(int index);
+    void readIRbuffer(AudioBuffer<float> &buffer, int index);
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CabImpulseAudioProcessor)
 };

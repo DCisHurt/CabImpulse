@@ -233,27 +233,39 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
     irName += MicType[chainSettings.micType];
     irName += "_Close_wav";
 
-    // switch ((int)getSampleRate())
-    // {
-    // case 44100:
-    //     /* code */
-    //     break;
-    // case 48000:
-    //     /* code */
-    //     break;
-    // case 88200:
-    //     /* code */
-    //     break;
-    // case 96000:
-    //     /* code */
-    //     break;
-    // default:
-    //     break;
-    // }
+    int indexFS;
 
+    switch ((int)getSampleRate())
+    {
+    case 44100:
+        indexFS = 0;
+        break;
+    case 48000:
+        indexFS = 1;
+        break;
+    case 88200:
+        indexFS = 2;
+        break;
+    case 96000:
+        indexFS = 3;
+        break;
+    default:
+        indexFS = 0;
+        break;
+    }
 
+    int index = 1008 * indexFS + chainSettings.cabType * 48 + chainSettings.micType * 6;
+    if (chainSettings.micOffAxis)
+    {
+        index += 3;
+    }
 
-    auto buffer = readIRbuffer(BinaryData::getNamedIndex(irName.toRawUTF8()));
+    AudioBuffer<float> buffer;
+    readIRbuffer(buffer, index);
+    // auto buffer_close = readIRbuffer(index);
+    // auto buffer2_mid = readIRbuffer(index + 2);
+    // auto buffer3_far = readIRbuffer(index + 1);
+
     leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
                                                                   getSampleRate(),
                                                                   juce::dsp::Convolution::Stereo::no,
@@ -265,44 +277,9 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
                                                                    juce::dsp::Convolution::Stereo::no,
                                                                    juce::dsp::Convolution::Trim::yes,
                                                                    juce::dsp::Convolution::Normalise::yes);
-
-    // const char *binaryData = 0;
-    // int binaryDataSize = 0;
-
-    // binaryData = BinaryData::getNamedResource(irName, binaryDataSize);
-
-    // int index = BinaryData::getNamedIndex(irName);
-    // DBG(index);
-    // auto *inputStream = new MemoryInputStream(binaryData, binaryDataSize, false);
-    // WavAudioFormat format;
-    // auto reader = format.createReaderFor(inputStream, true);
-
-    // // If reader was successfully created, load into AudioSampleBuffer array
-    // if (reader)
-    // {
-    //     AudioBuffer<float> buffer(static_cast<int>(reader->numChannels),
-    //                               static_cast<int>(reader->lengthInSamples));
-    //     reader->read(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), 0, buffer.getNumSamples());
-
-    //     leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-    //                                                                   getSampleRate(),
-    //                                                                   juce::dsp::Convolution::Stereo::no,
-    //                                                                   juce::dsp::Convolution::Trim::yes,
-    //                                                                   juce::dsp::Convolution::Normalise::yes);
-
-    //     rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-    //                                                                    getSampleRate(),
-    //                                                                    juce::dsp::Convolution::Stereo::no,
-    //                                                                    juce::dsp::Convolution::Trim::yes,
-    //                                                                    juce::dsp::Convolution::Normalise::yes);
-    // }
-    // else
-    // {
-    //     jassertfalse;
-    //     return;
-    // }
 }
-AudioBuffer<float> CabImpulseAudioProcessor::readIRbuffer(int index)
+
+void CabImpulseAudioProcessor::readIRbuffer(AudioBuffer<float> &buffer, int index)
 {
     const char *binaryData = 0;
     int binaryDataSize = 0;
@@ -316,15 +293,13 @@ AudioBuffer<float> CabImpulseAudioProcessor::readIRbuffer(int index)
     // If reader was successfully created, load into AudioSampleBuffer array
     if (reader)
     {
-        AudioBuffer<float> buffer(static_cast<int>(reader->numChannels),
-                                  static_cast<int>(reader->lengthInSamples));
+        buffer.setSize(static_cast<int>(reader->numChannels), static_cast<int>(reader->lengthInSamples));
         reader->read(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), 0, buffer.getNumSamples());
-        return buffer;
     }
     else
     {
         jassertfalse;
-        return AudioBuffer<float>(1, 1);
+        return;
     }
 }
 
@@ -398,14 +373,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
     layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Type",
                                                             "Mic Type",
                                                             juce::StringArray{
-                                                                "SM57",
                                                                 "R121",
                                                                 "MD409",
                                                                 "MD421",
                                                                 "S545SD",
-                                                                "ADi5",
+                                                                "SM57",
                                                                 "M30",
-                                                                "U87"},
+                                                                "U87",
+                                                                "ADi5"},
                                                             0));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Distance",
