@@ -7,7 +7,7 @@
 struct ChainSettings
 {
     float lowCutFreq{0}, highCutFreq{0};
-    int micType{0}, micDistance{0};
+    int cabType{0}, micType{0}, micDistance{0};
     bool micOffAxis{0};
 };
 
@@ -71,64 +71,31 @@ private:
         HighCut
     };
 
-    // enum CabType
-    // {
-    //     SM57,
-    //     SM58,
-    //     MD421,
-    //     MD441,
-    //     U87,
-    //     R121,
-    //     R122,
-    //     R160,
-    //     R121Ribbon,
-    //     R122Ribbon,
-    //     R160Ribbon,
-    //     OffAxis
-    // };
+    juce::StringArray MicType = {"57", "121", "409", "421", "545", "i5", "Ref", "U87"};
 
-// Marshall 1936 2×12
-// Marshall 1960 4×12
-// Marshall 1960AHW 4×12
-// Marshall 1970 4×12
-// Line 6 Vetta 4×12
-// ENGL Pro 4×12
-// Randall RS412XLT100 4×12
-// Krank Krankenstein 4×12
-// Bogner Uberkab 4×12
-// Mesa Standard 4×12
-// Orange 4×12
-// Genz Benz G-Flex ported 2×12
-// Fender 1965 Super Reverb 4x10
-// Roland JC120 2×12
-// Supro Thunderbolt 1x15
-// Vox AC30 2×12
-// Fender Deluxe 1x12
-// Ampeg SVT 8x10
-// Ampeg Portaflex 1x15
-// Aguilar DB 4x12
-// Gallien-Krueger Neo 4x10
-
-
-
-    enum MicDistance
-    {
-        Close,
-        Near,
-        Far
-    };
-
-    enum MicType
-    {
-        SM57,
-        R121,
-        MD409,
-        MD421,
-        S545SD,
-        ADi5,
-        M30,
-        U87
-    };
+    juce::StringArray CabType =
+        {
+            "Damien",
+            "1960",
+            "Sterling",
+            "Green",
+            "Angora",
+            "Eagle",
+            "Excel",
+            "Igor",
+            "Ogre",
+            "Oversize",
+            "Tangerine",
+            "Genzie",
+            "Blackface",
+            "Chordal",
+            "Dazed",
+            "Top_Boost",
+            "Tweed",
+            "Manatee",
+            "Motown",
+            "Ag",
+            "Neo"};
 
     void updateCutFilter(const ChainSettings &chainSettings);
     void updateImpulseResponse(const ChainSettings &chainSettings);

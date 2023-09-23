@@ -222,11 +222,40 @@ void CabImpulseAudioProcessor::updateCutFilter(const ChainSettings &chainSetting
 
 void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainSettings)
 {
+    String mic("IR_");
+    mic += (String)(int)getSampleRate();
+    mic += "_";
+    mic += CabType[chainSettings.cabType];
+    mic += "_";
+    mic += MicType[chainSettings.micType];
+    mic += "_";
 
+    if(chainSettings.micOffAxis)
+        mic += "OFF_";
+
+    switch (chainSettings.micDistance)
+    {
+    case 0:
+        mic += "Close";
+        break;
+    case 1:
+        mic += "Mid";
+        break;
+    case 2:
+        mic += "Far";
+        break;
+
+    default:
+        break;
+    }
+
+    mic += "_wav";
+    DBG(mic);
+    const char *irName = mic.toRawUTF8();
     const char *binaryData = 0;
     int binaryDataSize = 0;
 
-    binaryData = BinaryData::getNamedResource(BinaryData::namedResourceList[0], binaryDataSize);
+    binaryData = BinaryData::getNamedResource(irName, binaryDataSize);
 
     auto *inputStream = new MemoryInputStream(binaryData, binaryDataSize, false);
     WavAudioFormat format;
@@ -264,6 +293,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)
 
     settings.lowCutFreq = apvts.getRawParameterValue("Low Cut")->load();
     settings.highCutFreq = apvts.getRawParameterValue("High Cut")->load();
+    settings.cabType = (int)apvts.getRawParameterValue("Cab Type")->load();
     settings.micType = (int)apvts.getRawParameterValue("Mic Type")->load();
     settings.micDistance = (int)apvts.getRawParameterValue("Mic Distance")->load();
     settings.micOffAxis = apvts.getParameter("Mic Off Axis")->getValue();
@@ -289,14 +319,43 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
                                                            juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 1.0f),
                                                            20000.0f));
 
-    layout.add(std::make_unique<juce::AudioParameterChoice>("Cab",
-                                                            "Cab",
-                                                            juce::StringArray{"1x12", "2x12", "4x12"},
+    layout.add(std::make_unique<juce::AudioParameterChoice>("Cab Type",
+                                                            "Cab Type",
+                                                            juce::StringArray{
+                                                                "Marshall 1936 2X12",
+                                                                "Marshall 1960 4X12",
+                                                                "Marshall 1960AHW 4X12",
+                                                                "Marshall 1970 4X12",
+                                                                "Line 6 Vetta 4X12",
+                                                                "ENGL Pro 4X12",
+                                                                "Randall RS412XLT100 4X12",
+                                                                "Krank Krankenstein 4X12",
+                                                                "Bogner Uberkab 4X12",
+                                                                "Mesa Standard 4X12",
+                                                                "Orange 4X12",
+                                                                "Genz Benz G-Flex ported 2X12",
+                                                                "Fender 1965 Super Reverb 4X10",
+                                                                "Roland JC120 2X12",
+                                                                "Supro Thunderbolt 1X15",
+                                                                "Vox AC30 2X12",
+                                                                "Fender Deluxe 1X12",
+                                                                "Ampeg SVT 8X10",
+                                                                "Ampeg Portaflex 1X15",
+                                                                "Aguilar DB 4X12",
+                                                                "Gallien-Krueger Neo 4X10"},
                                                             0));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Type",
                                                             "Mic Type",
-                                                            juce::StringArray{"57", "121", "409", "421", "545", "i5", "REF", "U87"},
+                                                            juce::StringArray{
+                                                                "SM57",
+                                                                "R121",
+                                                                "MD409",
+                                                                "MD421",
+                                                                "S545SD",
+                                                                "ADi5",
+                                                                "M30",
+                                                                "U87"},
                                                             0));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Distance",
