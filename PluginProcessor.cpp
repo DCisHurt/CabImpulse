@@ -94,11 +94,7 @@ void CabImpulseAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     leftChain.prepare(spec);
     rightChain.prepare(spec);
 
-    auto chainSettings = getChainSettings(apvts);
-
-    updateCutFilter(chainSettings);
-    updateImpulseResponse(chainSettings);
-    updateGain(chainSettings);
+    updateParameters();
 }
 
 void CabImpulseAudioProcessor::releaseResources()
@@ -148,11 +144,7 @@ void CabImpulseAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    auto chainSettings = getChainSettings(apvts);
-
-    updateCutFilter(chainSettings);
-    updateImpulseResponse(chainSettings);
-    updateGain(chainSettings);
+    updateParameters();
 
     juce::dsp::AudioBlock<float> block(buffer);
 
@@ -181,17 +173,18 @@ juce::AudioProcessorEditor *CabImpulseAudioProcessor::createEditor()
 //==============================================================================
 void CabImpulseAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused(destData);
+    juce::MemoryOutputStream mos(destData, true);
+    apvts.state.writeToStream(mos);
 }
 
 void CabImpulseAudioProcessor::setStateInformation(const void *data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused(data, sizeInBytes);
+    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid())
+    {
+        apvts.replaceState(tree);
+        updateParameters();
+    }
 }
 
 void CabImpulseAudioProcessor::updateCutFilter(const ChainSettings &chainSettings)
@@ -224,15 +217,6 @@ void CabImpulseAudioProcessor::updateCutFilter(const ChainSettings &chainSetting
 
 void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainSettings)
 {
-
-    String irName("IR_");
-    irName += (String)(int)getSampleRate();
-    irName += "_";
-    irName += CabType[chainSettings.cabType];
-    irName += "_";
-    irName += MicType[chainSettings.micType];
-    irName += "_Close_wav";
-
     int indexFS;
 
     switch ((int)getSampleRate())
@@ -260,23 +244,55 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
         index += 3;
     }
 
-    AudioBuffer<float> buffer;
-    readIRbuffer(buffer, index);
-    // auto buffer_close = readIRbuffer(index);
-    // auto buffer2_mid = readIRbuffer(index + 2);
-    // auto buffer3_far = readIRbuffer(index + 1);
+    float distance = chainSettings.micDistance;
 
-    leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-                                                                  getSampleRate(),
-                                                                  juce::dsp::Convolution::Stereo::no,
-                                                                  juce::dsp::Convolution::Trim::yes,
-                                                                  juce::dsp::Convolution::Normalise::yes);
+    readIRbuffer(irBufferClose, index);
+    readIRbuffer(irbufferMid, index + 2);
+    readIRbuffer(irbufferFar, index + 1);
 
-    rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(buffer),
-                                                                   getSampleRate(),
-                                                                   juce::dsp::Convolution::Stereo::no,
-                                                                   juce::dsp::Convolution::Trim::yes,
-                                                                   juce::dsp::Convolution::Normalise::yes);
+    if (distance <= 0.5)
+    {
+        irBufferClose.applyGain(1 - distance * 2);
+        irbufferMid.applyGain(distance * 2);
+        irBufferClose.addFrom(0, 0, irbufferMid, 0, 0, irbufferMid.getNumSamples());
+        leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
+                                                                      getSampleRate(),
+                                                                      juce::dsp::Convolution::Stereo::no,
+                                                                      juce::dsp::Convolution::Trim::yes,
+                                                                      juce::dsp::Convolution::Normalise::yes);
+
+        rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
+                                                                       getSampleRate(),
+                                                                       juce::dsp::Convolution::Stereo::no,
+                                                                       juce::dsp::Convolution::Trim::yes,
+                                                                       juce::dsp::Convolution::Normalise::yes);
+    }
+    else
+    {
+        irbufferMid.applyGain(1 - (distance - 0.5f) * 2);
+        irbufferFar.applyGain((distance - 0.5f) * 2);
+        irbufferMid.addFrom(0, 0, irbufferFar, 0, 0, irbufferFar.getNumSamples());
+        leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
+                                                                      getSampleRate(),
+                                                                      juce::dsp::Convolution::Stereo::no,
+                                                                      juce::dsp::Convolution::Trim::yes,
+                                                                      juce::dsp::Convolution::Normalise::yes);
+
+        rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
+                                                                       getSampleRate(),
+                                                                       juce::dsp::Convolution::Stereo::no,
+                                                                       juce::dsp::Convolution::Trim::yes,
+                                                                       juce::dsp::Convolution::Normalise::yes);
+    }
+}
+
+void CabImpulseAudioProcessor::updateParameters()
+{
+    auto chainSettings = getChainSettings(apvts);
+
+    updateCutFilter(chainSettings);
+    updateImpulseResponse(chainSettings);
+    updateGain(chainSettings);
 }
 
 void CabImpulseAudioProcessor::readIRbuffer(AudioBuffer<float> &buffer, int index)
@@ -320,7 +336,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)
     settings.highCutFreq = apvts.getRawParameterValue("High Cut")->load();
     settings.cabType = (int)apvts.getRawParameterValue("Cab Type")->load();
     settings.micType = (int)apvts.getRawParameterValue("Mic Type")->load();
-    settings.micDistance = (int)apvts.getRawParameterValue("Mic Distance")->load();
+    settings.micDistance = apvts.getParameter("Mic Distance")->getValue();
     settings.micOffAxis = apvts.getParameter("Mic Off Axis")->getValue();
 
     return settings;
@@ -383,10 +399,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
                                                                 "ADi5"},
                                                             0));
 
-    layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Distance",
-                                                            "Mic Distance",
-                                                            juce::StringArray{"Close", "Mid", "Far"},
-                                                            0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Mic Distance",
+                                                           "Mic Distance",
+                                                           juce::NormalisableRange<float>(5.0f, 15.0f, 0.1f, 1.0f),
+                                                           0));
 
     layout.add(std::make_unique<juce::AudioParameterBool>("Mic Off Axis",
                                                           "Mic Off Axis",

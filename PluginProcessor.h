@@ -7,8 +7,8 @@
 
 struct ChainSettings
 {
-    float gain{0}, lowCutFreq{0}, highCutFreq{0};
-    int cabType{0}, micType{0}, micDistance{0};
+    float gain{0}, lowCutFreq{0}, highCutFreq{0}, micDistance{0};
+    int cabType{0}, micType{0};
     bool micOffAxis{0};
 };
 
@@ -74,36 +74,14 @@ private:
         GainControl
     };
 
-    juce::StringArray MicType = {"57", "121", "409", "421", "545", "i5", "Ref", "U87"};
-
-    juce::StringArray CabType =
-        {
-            "Damien",
-            "1960",
-            "Sterling",
-            "Green",
-            "Angora",
-            "Eagle",
-            "Excel",
-            "Igor",
-            "Ogre",
-            "Oversize",
-            "Tangerine",
-            "Genzie",
-            "Blackface",
-            "Chordal",
-            "Dazed",
-            "Top_Boost",
-            "Tweed",
-            "Manatee",
-            "Motown",
-            "Ag",
-            "Neo"};
+    AudioBuffer<float> irBufferClose;
+    AudioBuffer<float> irbufferMid;
+    AudioBuffer<float> irbufferFar;
 
     void updateCutFilter(const ChainSettings &chainSettings);
     void updateImpulseResponse(const ChainSettings &chainSettings);
     void updateGain(const ChainSettings &chainSettings);
-
+    void updateParameters();
     void readIRbuffer(AudioBuffer<float> &buffer, int index);
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CabImpulseAudioProcessor)
