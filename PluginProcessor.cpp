@@ -166,8 +166,8 @@ bool CabImpulseAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor *CabImpulseAudioProcessor::createEditor()
 {
-    // return new CabImpulseAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new CabImpulseAudioProcessorEditor (*this);
+    // return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -331,13 +331,13 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)
 {
     ChainSettings settings;
 
-    settings.gain = apvts.getRawParameterValue("Gain")->load();
+    settings.gain = apvts.getRawParameterValue("Output Level")->load();
     settings.lowCutFreq = apvts.getRawParameterValue("Low Cut")->load();
     settings.highCutFreq = apvts.getRawParameterValue("High Cut")->load();
     settings.cabType = (int)apvts.getRawParameterValue("Cab Type")->load();
     settings.micType = (int)apvts.getRawParameterValue("Mic Type")->load();
     settings.micDistance = apvts.getParameter("Mic Distance")->getValue();
-    settings.micOffAxis = apvts.getParameter("Mic Off Axis")->getValue();
+    settings.micOffAxis = apvts.getParameter("Mic Axis")->getValue();
 
     return settings;
 }
@@ -345,8 +345,8 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)
 juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Gain",
-                                                           "Gain",
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Output Level",
+                                                           "Output Level",
                                                            juce::NormalisableRange<float>(-48.0f, 24.0f, 0.1f, 1.0f),
                                                            0.0f));
 
@@ -362,41 +362,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Cab Type",
                                                             "Cab Type",
-                                                            juce::StringArray{
-                                                                "Marshall 1936 2X12",
-                                                                "Marshall 1960 4X12",
-                                                                "Marshall 1960AHW 4X12",
-                                                                "Marshall 1970 4X12",
-                                                                "Line 6 Vetta 4X12",
-                                                                "ENGL Pro 4X12",
-                                                                "Randall RS412XLT100 4X12",
-                                                                "Krank Krankenstein 4X12",
-                                                                "Bogner Uberkab 4X12",
-                                                                "Mesa Standard 4X12",
-                                                                "Orange 4X12",
-                                                                "Genz Benz G-Flex ported 2X12",
-                                                                "Fender 1965 Super Reverb 4X10",
-                                                                "Roland JC120 2X12",
-                                                                "Supro Thunderbolt 1X15",
-                                                                "Vox AC30 2X12",
-                                                                "Fender Deluxe 1X12",
-                                                                "Ampeg SVT 8X10",
-                                                                "Ampeg Portaflex 1X15",
-                                                                "Aguilar DB 4X12",
-                                                                "Gallien-Krueger Neo 4X10"},
+                                                            CabList,
                                                             0));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Mic Type",
                                                             "Mic Type",
-                                                            juce::StringArray{
-                                                                "R121",
-                                                                "MD409",
-                                                                "MD421",
-                                                                "S545SD",
-                                                                "SM57",
-                                                                "M30",
-                                                                "U87",
-                                                                "ADi5"},
+                                                            MicList,
                                                             0));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Mic Distance",
@@ -404,8 +375,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
                                                            juce::NormalisableRange<float>(5.0f, 15.0f, 0.1f, 1.0f),
                                                            0));
 
-    layout.add(std::make_unique<juce::AudioParameterBool>("Mic Off Axis",
-                                                          "Mic Off Axis",
+    layout.add(std::make_unique<juce::AudioParameterBool>("Mic Axis",
+                                                          "Mic Axis",
                                                           false));
 
     return layout;
