@@ -17,7 +17,7 @@ CabImpulseAudioProcessorEditor::CabImpulseAudioProcessorEditor(CabImpulseAudioPr
 
     MyLabel.setJustificationType(juce::Justification::centred);
     MyLabel.setColour(juce::Label::ColourIds::textColourId, juce::Colour(0xFFC3C3C3));
-    MyLabel.setFont(juce::Font(48.0f, juce::Font::bold));
+    MyLabel.setFont(juce::Font(40.0f, juce::Font::bold));
 
     cabTypeComboBox.setJustificationType(juce::Justification::centred);
     micTypeComboBox.setJustificationType(juce::Justification::centred);

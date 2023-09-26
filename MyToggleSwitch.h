@@ -23,7 +23,7 @@ public:
 
         def.setColour(switchColour, juce::Colour(0xFFC3C3C3));
         def.setColour(switchOffBackgroundColour, juce::Colour(0xff323232));
-        def.setColour(switchOnBackgroundColour, juce::Colour(0x3F8A8A8A));
+        def.setColour(switchOnBackgroundColour, juce::Colour(0x3FAAAAAA));
 
         setClickingTogglesState(true);
         addAndMakeVisible(switchCircle);
