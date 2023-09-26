@@ -352,12 +352,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout CabImpulseAudioProcessor::cr
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Low Cut",
                                                            "Low Cut",
-                                                           juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 1.0f),
+                                                           juce::NormalisableRange<float>(20.0f, 1000.0f, 1.0f, 1.0f),
                                                            20.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("High Cut",
                                                            "High Cut",
-                                                           juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 1.0f),
+                                                           juce::NormalisableRange<float>(6000.0f, 20000.0f, 1.0f, 1.0f),
                                                            20000.0f));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Cab Type",
