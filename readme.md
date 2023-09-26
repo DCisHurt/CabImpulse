@@ -3,8 +3,9 @@
 
 ![GitHub release](https://img.shields.io/github/v/release/DCisHurt/Cabimpulse.svg)
 
-
 Cab Impulse is an impulse response generator for guitar cabinets based on real studio recordings. Currently Supports VST3 and Windows Standalone application.
+
+![CabImpulse Screenshot](img/Screenshot.png)
 
 ## Download
 
