@@ -1,7 +1,8 @@
 
 # Cab Impulse
 
-[![GitHub Release](https://img.shields.io/badge/https%3A%2F%2Fgithub.com%2FDCisHurt%2FCabImpulse%2Freleases%2Ftag%2Fv1.0.0)]()
+![GitHub Release](https://img.shields.io/badge/https%3A%2F%2Fgithub.com%2FDCisHurt%2FCabImpulse%2Freleases%2Ftag%2Fv1.0.0)
+
 
 Cab Impulse is an impulse response generator for guitar cabinets based on real studio recordings. Currently Supports VST3 and Windows Standalone application.
 
