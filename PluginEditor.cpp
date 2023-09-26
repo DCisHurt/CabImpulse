@@ -16,7 +16,8 @@ CabImpulseAudioProcessorEditor::CabImpulseAudioProcessorEditor(CabImpulseAudioPr
     // editor's size to whatever you need it to be.
 
     MyLabel.setJustificationType(juce::Justification::centred);
-    MyLabel.setFont(juce::Font(30.0f, juce::Font::bold));
+    MyLabel.setColour(juce::Label::ColourIds::textColourId, juce::Colour(0xFFC3C3C3));
+    MyLabel.setFont(juce::Font(48.0f, juce::Font::bold));
 
     cabTypeComboBox.setJustificationType(juce::Justification::centred);
     micTypeComboBox.setJustificationType(juce::Justification::centred);
@@ -42,19 +43,21 @@ CabImpulseAudioProcessorEditor::~CabImpulseAudioProcessorEditor()
 void CabImpulseAudioProcessorEditor::paint(juce::Graphics &g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    g.fillAll(juce::Colour(0xFF2C2C2C));
 
+    g.setColour(juce::Colour(0xFFC3C3C3));
+    g.setFont(16);
+    
     g.drawFittedText("Cabinet Type",
-                     cabTypeComboBox.getBounds().expanded(0, cabTypeComboBox.getBounds().getHeight()*0.8),
+                     cabTypeComboBox.getBounds().expanded(0, cabTypeComboBox.getBounds().getHeight() * 0.8),
                      juce::Justification::centredTop, 1);
     g.drawFittedText("Microphone Type",
-                     micTypeComboBox.getBounds().expanded(0, micTypeComboBox.getBounds().getHeight()*0.8),
+                     micTypeComboBox.getBounds().expanded(0, micTypeComboBox.getBounds().getHeight() * 0.8),
                      juce::Justification::centredTop, 1);
     g.drawFittedText("Lo-Cut", lowCutKnob.getBounds(), juce::Justification::centredBottom, 1);
     g.drawFittedText("Output Level", gainKnob.getBounds(), juce::Justification::centredBottom, 1);
     g.drawFittedText("Hi-Cut", highCutKnob.getBounds(), juce::Justification::centredBottom, 1);
     g.drawFittedText("Mic Distance", micDistanceKnob.getBounds(), juce::Justification::centredBottom, 1);
-
 }
 
 void CabImpulseAudioProcessorEditor::resized()

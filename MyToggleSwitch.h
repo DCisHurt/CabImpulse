@@ -21,9 +21,9 @@ public:
 
         auto &def = juce::LookAndFeel::getDefaultLookAndFeel();
 
-        def.setColour(switchColour, juce::Colours::white);
-        def.setColour(switchOffBackgroundColour, juce::Colours::darkgrey);
-        def.setColour(switchOnBackgroundColour, juce::Colours::limegreen);
+        def.setColour(switchColour, juce::Colour(0xFFC3C3C3));
+        def.setColour(switchOffBackgroundColour, juce::Colour(0xff323232));
+        def.setColour(switchOnBackgroundColour, juce::Colour(0x3F8A8A8A));
 
         setClickingTogglesState(true);
         addAndMakeVisible(switchCircle);
@@ -53,6 +53,9 @@ public:
         // g.drawText(offText, buttomRow, juce::Justification::bottomLeft, 1);
         auto b = getSwitchBounds();
         auto textBound = b.expanded(b.getWidth(), b.getHeight()*1.5);
+
+        g.setColour(juce::Colour(0xFFC3C3C3));
+        g.setFont(16);
         g.drawText(title, textBound, juce::Justification::centredTop, 1);
 
         auto buttomRow = textBound.reduced(textBound.getWidth() * 0.3, 0);

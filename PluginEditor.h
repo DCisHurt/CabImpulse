@@ -7,11 +7,14 @@ class MyKnob : public juce::Slider
 {
 public:
     MyKnob(juce::String suffix) : juce::Slider(
-                                       juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                       juce::Slider::SliderStyle::Rotary,
                                        juce::Slider::TextEntryBoxPosition::NoTextBox)
     {
         this->setPopupDisplayEnabled(true, false, nullptr);
         this->setTextValueSuffix(suffix);
+        this->setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, juce::Colour(0xFF202020));
+        this->setColour(juce::Slider::ColourIds::rotarySliderFillColourId, juce::Colour(0xFF6893C3));
+        this->setColour(juce::Slider::ColourIds::thumbColourId, juce::Colour(0xFFC7F2FF));
     }
 };
 
@@ -21,6 +24,11 @@ public:
     MyComboBox(const juce::StringArray &list) : juce::ComboBox()
     {
         this->addItemList(list, 1);
+        this->setColour(juce::ComboBox::ColourIds::textColourId, juce::Colour(0xFFC3C3C3));
+        this->setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colour(0xFF404040));
+        this->setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colour(0xFF252525));
+        this->setColour(juce::ComboBox::ColourIds::arrowColourId, juce::Colour(0xFFC3C3C3));
+        this->setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colour(0xFF252525));
     }
 };
 
