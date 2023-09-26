@@ -44,16 +44,14 @@ This plugin is designed to be used with a guitar cab simulator. It can be used t
 
 ## Support Microphone list
 
-- R121
-- MD409
-- MD421
-- S545SD
-- SM57
-- M30
-- U87
-- ADi5
-
-- Support MIDI Polyphonic Expression ([MPE](https://www.midi.org/midi-articles/midi-polyphonic-expression-mpe)) standard.
+- Ribbon R121
+- Sennheiser MD409
+- Sennheiser MD421
+- Shure 545SD
+- Shure SM57
+- Earthworks M30
+- Neumann U87
+- Audix ADi5
 
 ## Clone and build
 
