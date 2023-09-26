@@ -258,14 +258,14 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
         leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
                                                                       getSampleRate(),
                                                                       juce::dsp::Convolution::Stereo::no,
-                                                                      juce::dsp::Convolution::Trim::yes,
-                                                                      juce::dsp::Convolution::Normalise::yes);
+                                                                      juce::dsp::Convolution::Trim::no,
+                                                                      juce::dsp::Convolution::Normalise::no);
 
         rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
                                                                        getSampleRate(),
                                                                        juce::dsp::Convolution::Stereo::no,
-                                                                       juce::dsp::Convolution::Trim::yes,
-                                                                       juce::dsp::Convolution::Normalise::yes);
+                                                                       juce::dsp::Convolution::Trim::no,
+                                                                       juce::dsp::Convolution::Normalise::no);
     }
     else
     {
@@ -275,14 +275,14 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
         leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
                                                                       getSampleRate(),
                                                                       juce::dsp::Convolution::Stereo::no,
-                                                                      juce::dsp::Convolution::Trim::yes,
-                                                                      juce::dsp::Convolution::Normalise::yes);
+                                                                      juce::dsp::Convolution::Trim::no,
+                                                                      juce::dsp::Convolution::Normalise::no);
 
         rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
                                                                        getSampleRate(),
                                                                        juce::dsp::Convolution::Stereo::no,
-                                                                       juce::dsp::Convolution::Trim::yes,
-                                                                       juce::dsp::Convolution::Normalise::yes);
+                                                                       juce::dsp::Convolution::Trim::no,
+                                                                       juce::dsp::Convolution::Normalise::no);
     }
 }
 
