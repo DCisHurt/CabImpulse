@@ -1,15 +1,17 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "MyToggleSwitch.h"
 
 class MyKnob : public juce::Slider
 {
 public:
-    MyKnob() : juce::Slider(
-                   juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox)
+    MyKnob(juce::String suffix) : juce::Slider(
+                                       juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                       juce::Slider::TextEntryBoxPosition::NoTextBox)
     {
         this->setPopupDisplayEnabled(true, false, nullptr);
+        this->setTextValueSuffix(suffix);
     }
 };
 
@@ -19,26 +21,6 @@ public:
     MyComboBox(const juce::StringArray &list) : juce::ComboBox()
     {
         this->addItemList(list, 1);
-    }
-};
-
-class MyToggleButton : public juce::ToggleButton
-{
-public:
-    MyToggleButton() : juce::ToggleButton()
-    {
-        // this->setClickingTogglesState(true);
-    }
-};
-
-class MySlider : public juce::Slider
-{
-public:
-    MySlider() : juce::Slider(
-                   juce::Slider::SliderStyle::LinearHorizontal,
-                   juce::Slider::TextEntryBoxPosition::NoTextBox)
-    {
-
     }
 };
 
@@ -58,19 +40,25 @@ private:
     // access the processor object that created it.
     CabImpulseAudioProcessor &processorRef;
 
-    MyKnob lowCutKnob, highCutKnob, gainKnob;
-
-    MySlider micDistanceSlider;
+    MyKnob lowCutKnob = MyKnob(" Hz");
+    MyKnob highCutKnob = MyKnob(" Hz");
+    MyKnob gainKnob = MyKnob(" dB");
+    MyKnob micDistanceKnob = MyKnob(" cm");
 
     MyComboBox cabTypeComboBox = MyComboBox(CabList);
     MyComboBox micTypeComboBox = MyComboBox(MicList);
 
-    MyToggleButton micAxisSwitch;
+    MyToggleSwitch micAxisSwitch = MyToggleSwitch("Microphone Axis", false, false);
+
+    const juce::String title = "Cab Impulse";
+
+    juce::Label MyLabel = juce::Label(title, title);
 
     using KnobAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     KnobAttachment lowCutKnobAttachment,
         highCutKnobAttachment,
-        gainKnobAttachment, micDistanceSliderAttachment;
+        gainKnobAttachment,
+        micDistanceKnobAttachment;
 
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
 
