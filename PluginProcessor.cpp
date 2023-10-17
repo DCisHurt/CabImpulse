@@ -6,9 +6,9 @@ CabImpulseAudioProcessor::CabImpulseAudioProcessor()
     : AudioProcessor(BusesProperties()
 #if !JucePlugin_IsMidiEffect
 #if !JucePlugin_IsSynth
-                         .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                         .withInput("Input", juce::AudioChannelSet::mono(), true)
 #endif
-                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+                         .withOutput("Output", juce::AudioChannelSet::mono(), true)
 #endif
       )
 {
@@ -91,8 +91,7 @@ void CabImpulseAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = 1;
 
-    leftChain.prepare(spec);
-    rightChain.prepare(spec);
+    effectChain.prepare(spec);
 
     updateParameters();
 }
@@ -135,6 +134,8 @@ void CabImpulseAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    updateParameters();
+
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).
@@ -144,18 +145,10 @@ void CabImpulseAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    updateParameters();
+    juce::dsp::AudioBlock<float> block {buffer};
 
-    juce::dsp::AudioBlock<float> block(buffer);
+    effectChain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    auto leftBlock = block.getSingleChannelBlock(0);
-    auto rightBlock = block.getSingleChannelBlock(1);
-
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-
-    leftChain.process(leftContext);
-    rightChain.process(rightContext);
 }
 
 //==============================================================================
@@ -166,7 +159,7 @@ bool CabImpulseAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor *CabImpulseAudioProcessor::createEditor()
 {
-    return new CabImpulseAudioProcessorEditor (*this);
+    return new CabImpulseAudioProcessorEditor(*this);
     // return new juce::GenericAudioProcessorEditor(*this);
 }
 
@@ -199,20 +192,14 @@ void CabImpulseAudioProcessor::updateCutFilter(const ChainSettings &chainSetting
                                                                                                           getSampleRate(),
                                                                                                           4);
 
-    auto &leftLowCut = leftChain.get<ChainPositions::LowCut>();
-    auto &rightLowCut = rightChain.get<ChainPositions::LowCut>();
-    auto &leftHighCut = leftChain.get<ChainPositions::HighCut>();
-    auto &rightHighCut = rightChain.get<ChainPositions::HighCut>();
+    auto &lowCut = effectChain.get<ChainPositions::LowCut>();
+    auto &highCut = effectChain.get<ChainPositions::HighCut>();
 
-    *leftLowCut.get<0>().coefficients = *lowCutCoefficients[0];
-    *leftLowCut.get<1>().coefficients = *lowCutCoefficients[1];
-    *rightLowCut.get<0>().coefficients = *lowCutCoefficients[0];
-    *rightLowCut.get<1>().coefficients = *lowCutCoefficients[1];
+    *lowCut.get<0>().coefficients = *lowCutCoefficients[0];
+    *lowCut.get<1>().coefficients = *lowCutCoefficients[1];
 
-    *leftHighCut.get<0>().coefficients = *highCutCoefficients[0];
-    *leftHighCut.get<1>().coefficients = *highCutCoefficients[1];
-    *rightHighCut.get<0>().coefficients = *highCutCoefficients[0];
-    *rightHighCut.get<1>().coefficients = *highCutCoefficients[1];
+    *highCut.get<0>().coefficients = *highCutCoefficients[0];
+    *highCut.get<1>().coefficients = *highCutCoefficients[1];
 }
 
 void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainSettings)
@@ -246,52 +233,52 @@ void CabImpulseAudioProcessor::updateImpulseResponse(const ChainSettings &chainS
 
     float distance = chainSettings.micDistance;
 
-    readIRbuffer(irBufferClose, index);
-    readIRbuffer(irbufferMid, index + 2);
-    readIRbuffer(irbufferFar, index + 1);
+    if (lastDistance == distance && lastIndex == index)
+    {
+        return;
+    }
+
+    if (lastIndex != index) // load new IRs
+    {
+        readIRbuffer(irBufferClose, index);
+        readIRbuffer(irbufferMid, index + 2);
+        readIRbuffer(irbufferFar, index + 1);
+    }
 
     if (distance <= 0.5)
     {
-        irBufferClose.applyGain(1 - distance * 2);
-        irbufferMid.applyGain(distance * 2);
-        irBufferClose.addFrom(0, 0, irbufferMid, 0, 0, irbufferMid.getNumSamples());
-        leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
-                                                                      getSampleRate(),
-                                                                      juce::dsp::Convolution::Stereo::no,
-                                                                      juce::dsp::Convolution::Trim::no,
-                                                                      juce::dsp::Convolution::Normalise::no);
+        tempBufferA = irbufferMid;
+        tempBufferB = irBufferClose;
 
-        rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irBufferClose),
-                                                                       getSampleRate(),
-                                                                       juce::dsp::Convolution::Stereo::no,
-                                                                       juce::dsp::Convolution::Trim::no,
-                                                                       juce::dsp::Convolution::Normalise::no);
+        tempBufferA.applyGain(1 - distance * 2);
+        tempBufferB.applyGain(distance * 2);
     }
     else
     {
-        irbufferMid.applyGain(1 - (distance - 0.5f) * 2);
-        irbufferFar.applyGain((distance - 0.5f) * 2);
-        irbufferMid.addFrom(0, 0, irbufferFar, 0, 0, irbufferFar.getNumSamples());
-        leftChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
-                                                                      getSampleRate(),
-                                                                      juce::dsp::Convolution::Stereo::no,
-                                                                      juce::dsp::Convolution::Trim::no,
-                                                                      juce::dsp::Convolution::Normalise::no);
+        tempBufferA = irbufferMid;
+        tempBufferB = irbufferFar;
 
-        rightChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(irbufferMid),
-                                                                       getSampleRate(),
-                                                                       juce::dsp::Convolution::Stereo::no,
-                                                                       juce::dsp::Convolution::Trim::no,
-                                                                       juce::dsp::Convolution::Normalise::no);
+        tempBufferA.applyGain(1 - (distance - 0.5f) * 2);
+        tempBufferB.applyGain((distance - 0.5f) * 2);
     }
+
+    tempBufferA.addFrom(0, 0, tempBufferB, 0, 0, tempBufferB.getNumSamples());
+
+    effectChain.get<ChainPositions::IRloader>().loadImpulseResponse(std::move(tempBufferA),
+                                                                    getSampleRate(),
+                                                                    juce::dsp::Convolution::Stereo::no,
+                                                                    juce::dsp::Convolution::Trim::yes,
+                                                                    juce::dsp::Convolution::Normalise::no);
+
+    lastIndex = index;
+    lastDistance = distance;
 }
 
 void CabImpulseAudioProcessor::updateParameters()
 {
     auto chainSettings = getChainSettings(apvts);
-
-    updateCutFilter(chainSettings);
     updateImpulseResponse(chainSettings);
+    updateCutFilter(chainSettings);
     updateGain(chainSettings);
 }
 
@@ -321,10 +308,8 @@ void CabImpulseAudioProcessor::readIRbuffer(AudioBuffer<float> &buffer, int inde
 
 void CabImpulseAudioProcessor::updateGain(const ChainSettings &chainSettings)
 {
-    auto &leftGain = leftChain.get<ChainPositions::GainControl>();
-    auto &rightGain = rightChain.get<ChainPositions::GainControl>();
-    leftGain.setGainDecibels(chainSettings.gain);
-    rightGain.setGainDecibels(chainSettings.gain);
+    auto &gain = effectChain.get<ChainPositions::GainControl>();
+    gain.setGainDecibels(chainSettings.gain);
 }
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts)

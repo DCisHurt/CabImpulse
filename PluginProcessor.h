@@ -96,14 +96,14 @@ private:
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter>;
     using ImpulseLoader = juce::dsp::Convolution;
     using Gain = juce::dsp::Gain<float>;
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, ImpulseLoader, CutFilter, Gain>;
+    using MonoChain = juce::dsp::ProcessorChain<ImpulseLoader, CutFilter, CutFilter, Gain>;
 
-    MonoChain leftChain, rightChain;
+    MonoChain effectChain;
 
     enum ChainPositions
     {
-        LowCut,
         IRloader,
+        LowCut,
         HighCut,
         GainControl
     };
@@ -111,6 +111,11 @@ private:
     AudioBuffer<float> irBufferClose;
     AudioBuffer<float> irbufferMid;
     AudioBuffer<float> irbufferFar;
+
+    AudioBuffer<float> tempBufferA, tempBufferB;
+
+    int lastIndex = -1;
+    float lastDistance = -1.0f;
 
     void updateCutFilter(const ChainSettings &chainSettings);
     void updateImpulseResponse(const ChainSettings &chainSettings);
